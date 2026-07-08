@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>MatchDay IQ — Live Operations Console for Matchday Staff</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --surface:#121127;
+    --surface-container-lowest:#0c0b21;
+    --surface-container-low:#1a1930;
+    --surface-container:#1e1d34;
+    --surface-container-high:#29283f;
+    --surface-container-highest:#33324a;
+    --on-surface:#e3dffe;
+    --on-surface-variant:#c7c4d9;
+    --outline:#908fa2;
+    --outline-variant:#464556;
+    --primary:#c2c1ff;
+    --on-primary:#1900a7;
+    --primary-container:#2f1ce1;
+    --secondary:#d8b9ff;
+    --secondary-container:#6e06d0;
+    --tertiary:#00dbe9;
+    --tertiary-container:#005359;
+    --on-tertiary-container:#00cedb;
+    --error:#ffb4ab;
+    --error-container:#93000a;
+    --on-error-container:#ffdad6;
+    --deep-black:#000000;
+    --charcoal-surface:#0D0C22;
+    --glass-border: rgba(255,255,255,0.1);
+    --accent-pink:#EA4C89;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background: var(--deep-black);
+    color: var(--on-surface);
+    font-family:'Geist', -apple-system, sans-serif;
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+  a{color:inherit;}
+  .mono{font-family:'JetBrains Mono', monospace; letter-spacing:0.05em;}
+  .wrap{max-width:1280px; margin:0 auto; padding:0 24px;}
+  @media (max-width:640px){ .wrap{padding:0 16px;} }
+
+  /* ambient mesh glow behind everything */
+  .mesh{
+    position:fixed; inset:0; z-index:0; pointer-events:none;
+    background:
+      radial-gradient(700px 500px at 15% 0%, rgba(47,28,225,0.35), transparent 60%),
+      radial-gradient(600px 500px at 85% 15%, rgba(0,219,233,0.16), transparent 60%),
+      radial-gradient(800px 600px at 50% 100%, rgba(110,6,208,0.22), transparent 60%);
+  }
+
+  /* NAV */
+  nav{
+    position:fixed; top:0; left:0; right:0; z-index:50;
+    backdrop-filter: blur(16px);
+    background: rgba(13,12,34,0.55);
+    border-bottom:1px solid var(--glass-border);
+  }
+  nav .inner{display:flex; align-items:center; justify-content:space-between; padding:16px 24px; max-width:1280px; margin:0 auto;}
+  .logo{display:flex; align-items:center; gap:10px; font-weight:700; font-size:16px; letter-spacing:-0.01em;}
+  .logo-dot{width:10px; height:10px; border-radius:50%; background:var(--tertiary); box-shadow:0 0 12px 2px var(--tertiary);}
+  .navlinks{display:flex; gap:32px; font-size:14px; color:var(--on-surface-variant);}
+  .navlinks a{text-decoration:none; transition:color .15s;}
+  .navlinks a:hover{color:var(--on-surface);}
+  @media (max-width: 860px){ .navlinks{display:none;} }
+  .btn{
+    display:inline-flex; align-items:center; justify-content:center; gap:8px;
+    padding:11px 20px; border-radius:16px; font-weight:600; font-size:14px;
+    cursor:pointer; border:1px solid transparent; text-decoration:none;
+    transition: transform .15s ease, box-shadow .15s ease;
+  }
+  .btn:hover{transform:translateY(-1px);}
+  .btn-primary{
+    background: linear-gradient(135deg, var(--primary-container), var(--secondary-container));
+    color:#fff; box-shadow: 0 0 0 1px rgba(255,255,255,0.08) inset, 0 8px 30px -8px rgba(47,28,225,0.7);
+  }
+  .btn-ghost{background:transparent; border:1px solid var(--outline-variant); color:var(--on-surface);}
+  .btn-ghost:hover{border-color:var(--primary);}
+  .btn-sm{padding:8px 16px; font-size:13px; border-radius:12px;}
+
+  /* HERO */
+  header.hero{position:relative; z-index:1; padding:180px 0 100px;}
+  .eyebrow{
+    display:inline-flex; align-items:center; gap:8px;
+    font-size:12px; text-transform:uppercase; color:var(--tertiary);
+    padding:6px 14px; border:1px solid rgba(0,219,233,0.35); border-radius:9999px;
+    background:rgba(0,219,233,0.06); margin-bottom:24px;
+  }
+  .eyebrow::before{content:''; width:6px; height:6px; border-radius:50%; background:var(--tertiary); box-shadow:0 0 8px 2px var(--tertiary);}
+  .hero-grid{display:grid; grid-template-columns: 1.05fr 0.95fr; gap:56px; align-items:center;}
+  @media (max-width: 980px){ .hero-grid{grid-template-columns:1fr;} }
+  h1.display{
+    font-size:64px; font-weight:700; line-height:72px; letter-spacing:-0.02em; margin:0 0 20px;
+  }
+  h1.display .grad{
+    background: linear-gradient(120deg, var(--primary), var(--tertiary));
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+  @media (max-width:640px){ h1.display{font-size:32px; line-height:40px;} }
+  .lede{font-size:18px; line-height:28px; color:var(--on-surface-variant); max-width:520px; margin-bottom:36px;}
+  .hero-ctas{display:flex; gap:14px; flex-wrap:wrap; margin-bottom:28px;}
+  .hero-meta{display:flex; gap:24px; flex-wrap:wrap; font-size:13px; color:var(--outline);}
+  .hero-meta span{display:flex; align-items:center; gap:8px;}
+  .hero-meta b{color:var(--on-surface-variant); font-weight:500;}
+
+  /* SIGNATURE: live cockpit panel */
+  .cockpit{
+    position:relative;
+    background: rgba(30,29,52,0.55);
+    border:1px solid var(--glass-border);
+    border-radius:24px;
+    backdrop-filter: blur(20px);
+    padding:22px;
+    box-shadow: 0 30px 80px -20px rgba(0,0,0,0.7);
+  }
+  .cockpit::before{
+    content:''; position:absolute; inset:-1px; z-index:-1; border-radius:24px;
+    background: linear-gradient(135deg, rgba(194,193,255,0.5), rgba(0,219,233,0.25), transparent 60%);
+    opacity:.5; filter:blur(18px);
+  }
+  .cockpit-head{display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;}
+  .cockpit-head .mono{font-size:11px; color:var(--outline);}
+  .live-pill{display:flex; align-items:center; gap:6px; font-size:11px; color:var(--tertiary);}
+  .live-pill i{width:6px; height:6px; border-radius:50%; background:var(--tertiary); box-shadow:0 0 8px 2px var(--tertiary); animation: pulse 1.6s infinite;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.35;}}
+  .zone-list{display:flex; flex-direction:column; gap:10px;}
+  .zone-row{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:14px 16px; border-radius:14px; background:var(--surface-container-low);
+    border:1px solid var(--outline-variant);
+  }
+  .zone-name{font-size:14px; font-weight:600;}
+  .zone-sub{font-size:11.5px; color:var(--outline); margin-top:2px;}
+  .status{
+    display:flex; align-items:center; gap:7px; font-size:12px; font-weight:500;
+    padding:5px 11px; border-radius:9999px; font-family:'JetBrains Mono', monospace; letter-spacing:0.04em;
+  }
+  .status i{width:7px; height:7px; border-radius:50%;}
+  .status.clear{background:rgba(0,219,233,0.12); color:var(--tertiary);}
+  .status.clear i{background:var(--tertiary); box-shadow:0 0 6px 1px var(--tertiary);}
+  .status.watch{background:rgba(216,185,255,0.14); color:var(--secondary);}
+  .status.watch i{background:var(--secondary); box-shadow:0 0 6px 1px var(--secondary);}
+  .status.alert{background:rgba(255,180,171,0.14); color:var(--error);}
+  .status.alert i{background:var(--error); box-shadow:0 0 6px 1px var(--error); animation:pulse 1s infinite;}
+  .cockpit-foot{display:flex; justify-content:space-between; margin-top:16px; padding-top:14px; border-top:1px solid var(--outline-variant); font-size:11px; color:var(--outline);}
+
+  /* SECTION shared */
+  section{position:relative; z-index:1; padding:80px 0;}
+  .section-head{max-width:640px; margin:0 auto 48px;}
+  .section-head.left{margin:0 0 48px;}
+  .tag{font-size:12px; text-transform:uppercase; color:var(--secondary); margin-bottom:12px; display:block;}
+  h2.headline{font-size:40px; font-weight:600; line-height:48px; letter-spacing:-0.01em; margin:0 0 12px;}
+  @media (max-width:640px){ h2.headline{font-size:32px; line-height:40px;} }
+  .sub{color:var(--on-surface-variant); font-size:18px; line-height:28px;}
+
+  /* STAT BAR */
+  .statbar{
+    display:grid; grid-template-columns:repeat(4,1fr); gap:1px;
+    background:var(--outline-variant); border:1px solid var(--outline-variant); border-radius:16px; overflow:hidden;
+  }
+  @media (max-width:780px){ .statbar{grid-template-columns:repeat(2,1fr);} }
+  .stat{background:var(--surface-container-low); padding:26px 22px;}
+  .stat .num{font-family:'JetBrains Mono', monospace; font-size:28px; font-weight:500; color:var(--tertiary);}
+  .stat .label{font-size:13px; color:var(--on-surface-variant); margin-top:6px;}
+
+  /* FEATURE CARDS */
+  .cards{display:grid; grid-template-columns:repeat(3,1fr); gap:20px;}
+  @media (max-width:900px){ .cards{grid-template-columns:1fr 1fr;} }
+  @media (max-width:640px){ .cards{grid-template-columns:1fr;} }
+  .card{
+    background:var(--charcoal-surface); border:1px solid var(--glass-border); border-radius:16px;
+    padding:26px; position:relative; overflow:hidden;
+  }
+  .card::after{content:''; position:absolute; top:-40px; right:-40px; width:120px; height:120px; border-radius:50%; background:radial-gradient(circle, rgba(194,193,255,0.16), transparent 70%);}
+  .card .icon{width:38px; height:38px; border-radius:10px; display:flex; align-items:center; justify-content:center; margin-bottom:18px; background:var(--surface-container-high); color:var(--tertiary); font-size:18px;}
+  .card h3{font-size:18px; font-weight:600; margin:0 0 8px;}
+  .card p{font-size:14.5px; line-height:22px; color:var(--on-surface-variant); margin:0;}
+
+  /* ROLES TABLE */
+  .roles{display:grid; grid-template-columns:1fr 1fr; gap:20px;}
+  @media (max-width:780px){ .roles{grid-template-columns:1fr;} }
+  .role-card{background:var(--surface-container); border:1px solid var(--outline-variant); border-radius:16px; padding:28px;}
+  .role-card.organizer{border-color: rgba(194,193,255,0.4); box-shadow:0 0 0 1px rgba(194,193,255,0.08) inset;}
+  .role-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;}
+  .role-badge{font-family:'JetBrains Mono', monospace; font-size:11px; padding:4px 10px; border-radius:9999px; background:var(--surface-container-highest); color:var(--on-surface-variant);}
+  .role-card.organizer .role-badge{background:rgba(194,193,255,0.15); color:var(--primary);}
+  ul.perms{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:12px;}
+  ul.perms li{display:flex; gap:10px; font-size:14.5px; color:var(--on-surface-variant); align-items:flex-start;}
+  ul.perms li .chk{color:var(--tertiary); flex-shrink:0;}
+  ul.perms li .cross{color:var(--outline); flex-shrink:0;}
+
+  /* SECURITY */
+  .security-wrap{display:grid; grid-template-columns:0.9fr 1.1fr; gap:56px; align-items:center;}
+  @media (max-width:900px){ .security-wrap{grid-template-columns:1fr;} }
+  .sec-list{display:flex; flex-direction:column; gap:20px;}
+  .sec-item{display:flex; gap:16px;}
+  .sec-item .dot{width:8px; height:8px; border-radius:50%; background:var(--tertiary); margin-top:8px; flex-shrink:0; box-shadow:0 0 8px 2px rgba(0,219,233,0.5);}
+  .sec-item h4{margin:0 0 4px; font-size:15px; font-weight:600;}
+  .sec-item p{margin:0; font-size:14px; color:var(--on-surface-variant); line-height:21px;}
+  .code-panel{
+    background:var(--surface-container-lowest); border:1px solid var(--glass-border); border-radius:16px;
+    padding:22px; font-family:'JetBrains Mono', monospace; font-size:12.5px; line-height:22px; color:var(--on-surface-variant);
+    overflow-x:auto;
+  }
+  .code-panel .k{color:var(--tertiary);}
+  .code-panel .s{color:var(--secondary);}
+  .code-panel .c{color:var(--outline);}
+
+  /* CTA */
+  .cta-panel{
+    background: linear-gradient(135deg, var(--primary-container), var(--secondary-container));
+    border-radius:24px; padding:64px 48px; text-align:center; position:relative; overflow:hidden;
+  }
+  .cta-panel::before{content:''; position:absolute; inset:0; background:radial-gradient(500px 300px at 50% 0%, rgba(255,255,255,0.18), transparent 70%);}
+  .cta-panel h2{position:relative; font-size:36px; font-weight:600; margin:0 0 12px; color:#fff; letter-spacing:-0.01em;}
+  .cta-panel p{position:relative; color:rgba(255,255,255,0.85); font-size:16px; margin:0 0 28px;}
+  .cta-panel .btn-primary{background:#fff; color:var(--on-primary); box-shadow:none;}
+  .cta-panel .btn-ghost{border-color:rgba(255,255,255,0.4); color:#fff;}
+  .cta-row{position:relative; display:flex; gap:14px; justify-content:center; flex-wrap:wrap;}
+
+  footer{position:relative; z-index:1; border-top:1px solid var(--outline-variant); padding:40px 0; margin-top:40px;}
+  .foot-row{display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px; font-size:13px; color:var(--outline);}
+  .foot-links{display:flex; gap:24px;}
+  .foot-links a{text-decoration:none; color:var(--outline); transition:color .15s;}
+  .foot-links a:hover{color:var(--on-surface);}
+
+  @media (prefers-reduced-motion: reduce){
+    * { animation: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="mesh"></div>
+
+<nav>
+  <div class="inner">
+    <div class="logo"><span class="logo-dot"></span> MatchDay IQ</div>
+    <div class="navlinks">
+      <a href="#platform">Platform</a>
+      <a href="#roles">Roles</a>
+      <a href="#security">Security</a>
+      <a href="#deploy">Deploy</a>
+    </div>
+    <div style="display:flex; gap:10px;">
+      <a href="/login.html" class="btn btn-ghost btn-sm">Sign in</a>
+      <a href="#deploy" class="btn btn-primary btn-sm">Request access</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero wrap">
+  <div class="hero-grid">
+    <div>
+      <span class="eyebrow mono">Live Operations Console</span>
+      <h1 class="display">One board for<br><span class="grad">every zone, every shift.</span></h1>
+      <p class="lede">MatchDay IQ replaces the walkie-talkie guesswork with a shared, real-time view of stadium zones and incidents — so organizers and volunteers are always looking at the same truth.</p>
+      <div class="hero-ctas">
+        <a href="#deploy" class="btn btn-primary">Request access</a>
+        <a href="/dashboard.html" class="btn btn-ghost">Open the console →</a>
+      </div>
+      <div class="hero-meta mono">
+        <span><b>4s</b> sync interval</span>
+        <span><b>2</b> enforced roles</span>
+        <span><b>8h</b> shift sessions</span>
+      </div>
+    </div>
+
+    <div class="cockpit">
+      <div class="cockpit-head">
+        <span class="mono">ESTADIO BANORTE · SECTOR VIEW</span>
+        <span class="live-pill"><i></i> LIVE</span>
+      </div>
+      <div class="zone-list">
+        <div class="zone-row">
+          <div><div class="zone-name">Gate 4 — North Concourse</div><div class="zone-sub">Updated 6s ago · organizer1</div></div>
+          <div class="status clear"><i></i>CLEAR</div>
+        </div>
+        <div class="zone-row">
+          <div><div class="zone-name">Section 214 — Upper Bowl</div><div class="zone-sub">Updated 12s ago · volunteer1</div></div>
+          <div class="status watch"><i></i>WATCH</div>
+        </div>
+        <div class="zone-row">
+          <div><div class="zone-name">Concourse B — Concessions</div><div class="zone-sub">Incident logged 41s ago</div></div>
+          <div class="status alert"><i></i>ALERT</div>
+        </div>
+        <div class="zone-row">
+          <div><div class="zone-name">Parking Lot C</div><div class="zone-sub">Updated 2m ago · organizer1</div></div>
+          <div class="status clear"><i></i>CLEAR</div>
+        </div>
+      </div>
+      <div class="cockpit-foot mono">
+        <span>4 zones tracked</span>
+        <span>1 open incident</span>
+      </div>
+    </div>
+  </div>
+</header>
+
+<section id="stats" class="wrap">
+  <div class="statbar">
+    <div class="stat"><div class="num">100%</div><div class="label">Shared board — same SQLite source for every device on shift</div></div>
+    <div class="stat"><div class="num">401</div><div class="label">Every API route auth-gated except login</div></div>
+    <div class="stat"><div class="num">bcrypt</div><div class="label">Passwords hashed, never stored plain</div></div>
+    <div class="stat"><div class="num">100</div><div class="label">Most recent incidents kept on the feed</div></div>
+  </div>
+</section>
+
+<section id="platform" class="wrap">
+  <div class="section-head">
+    <span class="tag mono">Platform</span>
+    <h2 class="headline">Built around the two things that actually go wrong on matchday</h2>
+    <p class="sub">Zones drift out of status, and incidents get reported twice or not at all. MatchDay IQ keeps both in one place, polling every four seconds so nobody's screen goes stale.</p>
+  </div>
+  <div class="cards">
+    <div class="card">
+      <div class="icon">◈</div>
+      <h3>Zone status board</h3>
+      <p>Cycle a zone through Clear → Watch → Alert with one tap. Every staff member on the network sees the change within seconds — no refresh, no group chat.</p>
+    </div>
+    <div class="card">
+      <div class="icon">▲</div>
+      <h3>Incident logging</h3>
+      <p>Log type, severity, and location in seconds. The last 100 incidents stay visible to the whole crew, so nothing gets reported into a void.</p>
+    </div>
+    <div class="card">
+      <div class="icon">◐</div>
+      <h3>Personal checklists</h3>
+      <p>Shift checklists and language preference are saved per account, so switching devices mid-shift doesn't mean starting over.</p>
+    </div>
+  </div>
+</section>
+
+<section id="roles" class="wrap">
+  <div class="section-head">
+    <span class="tag mono">Roles</span>
+    <h2 class="headline">Your account decides what you can touch</h2>
+    <p class="sub">Persona isn't a toggle you can flip on the fly — it's locked to the account that was provisioned for you, and the server enforces it on every request.</p>
+  </div>
+  <div class="roles">
+    <div class="role-card organizer">
+      <div class="role-head"><h3 style="margin:0; font-size:18px;">Organizer</h3><span class="role-badge mono">FULL CONTROL</span></div>
+      <ul class="perms">
+        <li><span class="chk">✓</span> View and cycle every zone's status</li>
+        <li><span class="chk">✓</span> Log and review incidents</li>
+        <li><span class="chk">✓</span> Resolve incidents — a 403 blocks anyone else</li>
+        <li><span class="chk">✓</span> Manage own checklist and language preference</li>
+      </ul>
+    </div>
+    <div class="role-card">
+      <div class="role-head"><h3 style="margin:0; font-size:18px;">Volunteer</h3><span class="role-badge mono">FIELD ACCESS</span></div>
+      <ul class="perms">
+        <li><span class="chk">✓</span> View and cycle every zone's status</li>
+        <li><span class="chk">✓</span> Log incidents as they happen</li>
+        <li><span class="cross">✕</span> Resolving incidents is organizer-only</li>
+        <li><span class="chk">✓</span> Manage own checklist and language preference</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section id="security" class="wrap">
+  <div class="security-wrap">
+    <div>
+      <span class="tag mono">Security</span>
+      <h2 class="headline" style="font-size:32px; line-height:40px;">A real login, not a shared link</h2>
+      <div class="sec-list">
+        <div class="sec-item">
+          <div class="dot"></div>
+          <div><h4>Session-backed auth</h4><p>Sign-in issues an 8-hour, httpOnly session cookie — matched to a shift length, not left open indefinitely.</p></div>
+        </div>
+        <div class="sec-item">
+          <div class="dot"></div>
+          <div><h4>Per-account data isolation</h4><p>Preference reads and writes check that the requested user ID matches your own session — nobody reads or overwrites someone else's saved state.</p></div>
+        </div>
+        <div class="sec-item">
+          <div class="dot"></div>
+          <div><h4>Hashed credentials</h4><p>Every password is hashed with bcrypt before it touches the database. Nothing is ever stored in plain text.</p></div>
+        </div>
+      </div>
+    </div>
+    <div class="code-panel">
+<span class="c">POST</span> <span class="k">/api/auth/login</span><br>
+{ <span class="s">"username"</span>: <span class="s">"organizer1"</span>, <span class="s">"password"</span>: <span class="s">"••••••••"</span> }<br><br>
+<span class="c">→ 200</span> session cookie set, expires in 8h<br><br>
+<span class="c">GET</span> <span class="k">/api/preferences/:userId</span><br>
+<span class="c">→ 403</span> if :userId ≠ session user<br><br>
+<span class="c">POST</span> <span class="k">/api/incidents/:id/resolve</span><br>
+<span class="c">→ 403</span> if role ≠ organizer
+    </div>
+  </div>
+</section>
+
+<section id="deploy" class="wrap">
+  <div class="cta-panel">
+    <h2>Get your crew on one board before first whistle</h2>
+    <p>Express + SQLite under the hood. Runs on a laptop tonight, on Render or a VPS by next matchday.</p>
+    <div class="cta-row">
+      <a href="/dashboard.html" class="btn btn-primary">Sign in to the console</a>
+      <a href="#security" class="btn btn-ghost">Review security details</a>
+    </div>
+  </div>
+</section>
+
+<footer class="wrap">
+  <div class="foot-row">
+    <div class="mono">MATCHDAY IQ — OPERATIONS CONSOLE</div>
+    <div class="foot-links">
+      <a href="#platform">Platform</a>
+      <a href="#roles">Roles</a>
+      <a href="#security">Security</a>
+      <a href="/login.html">Sign in</a>
+    </div>
+    <div>© 2026 Estadio Banorte Ops</div>
+  </div>
+</footer>
+
+</body>
+</html>

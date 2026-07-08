@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>MatchDay IQ — Estadio Banorte Operations</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --obsidian:#15161A;
+    --obsidian-2:#1D1F26;
+    --stone:#8B8478;
+    --bone:#EDE8DD;
+    --turquoise:#2CA6A0;
+    --marigold:#E3A73B;
+    --clay:#C9622F;
+    --alert:#C43B3B;
+    --line: rgba(237,232,221,0.14);
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background: var(--obsidian);
+    color: var(--bone);
+    font-family:'Inter', sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1100px; margin:0 auto; padding:28px 20px 60px;}
+
+  /* HEADER */
+  header{
+    display:flex; justify-content:space-between; align-items:flex-end;
+    border-bottom:1px solid var(--line);
+    padding-bottom:18px; margin-bottom:22px;
+    flex-wrap:wrap; gap:14px;
+  }
+  .brand-eyebrow{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--turquoise); margin-bottom:6px;
+  }
+  h1{
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:700; font-size:30px; margin:0; letter-spacing:-.01em;
+  }
+  .venue-sub{color:var(--stone); font-size:13.5px; margin-top:4px;}
+  .clock{
+    font-family:'IBM Plex Mono', monospace;
+    text-align:right; font-size:12px; color:var(--stone);
+  }
+  .clock b{color:var(--bone); font-size:15px; display:block;}
+
+  /* CONTROLS */
+  .controls{display:flex; gap:12px; flex-wrap:wrap; margin-bottom:26px;}
+  .segmented{
+    display:flex; background:var(--obsidian-2); border:1px solid var(--line);
+    border-radius:10px; overflow:hidden;
+  }
+  .segmented button{
+    font-family:'Space Grotesk', sans-serif; font-weight:600; font-size:13px;
+    background:none; border:none; color:var(--stone); padding:10px 16px; cursor:pointer;
+    transition:.15s;
+  }
+  .segmented button.active{background:var(--turquoise); color:var(--obsidian);}
+  .segmented button:not(.active):hover{color:var(--bone);}
+  select{
+    background:var(--obsidian-2); color:var(--bone); border:1px solid var(--line);
+    border-radius:10px; padding:10px 14px; font-family:'Inter',sans-serif; font-size:13px;
+    cursor:pointer;
+  }
+
+  /* PHASE TABS */
+  .phase-tabs{display:flex; gap:8px; margin-bottom:24px;}
+  .phase-tabs button{
+    flex:1; font-family:'Space Grotesk', sans-serif; font-weight:600; font-size:14px;
+    padding:13px 10px; border-radius:10px; border:1px solid var(--line);
+    background:var(--obsidian-2); color:var(--stone); cursor:pointer; transition:.15s;
+    position:relative;
+  }
+  .phase-tabs button.active{
+    color:var(--bone); border-color:var(--marigold);
+    box-shadow: inset 0 0 0 1px var(--marigold);
+  }
+  .phase-tabs button.active::after{
+    content:''; position:absolute; bottom:-9px; left:50%; transform:translateX(-50%);
+    width:6px; height:6px; border-radius:50%; background:var(--marigold);
+  }
+
+  .grid{display:grid; grid-template-columns: 1.3fr 1fr; gap:20px;}
+  @media (max-width:820px){ .grid{grid-template-columns:1fr;} }
+
+  .panel{
+    background:var(--obsidian-2); border:1px solid var(--line); border-radius:14px;
+    padding:20px 22px;
+  }
+  .panel h2{
+    font-family:'Space Grotesk', sans-serif; font-size:15px; margin:0 0 4px;
+    display:flex; align-items:center; gap:8px;
+  }
+  .panel .hint{color:var(--stone); font-size:12.5px; margin:0 0 16px;}
+
+  .task{
+    display:flex; align-items:flex-start; gap:10px; padding:9px 0;
+    border-bottom:1px solid var(--line); font-size:13.5px;
+  }
+  .task:last-child{border-bottom:none;}
+  .task input{margin-top:3px; accent-color:var(--turquoise);}
+  .task label{cursor:pointer;}
+  .task.done label{color:var(--stone); text-decoration:line-through;}
+  .task .tag{
+    font-family:'IBM Plex Mono', monospace; font-size:10px; color:var(--marigold);
+    border:1px solid var(--marigold); border-radius:5px; padding:1px 6px; margin-right:6px;
+    white-space:nowrap;
+  }
+
+  /* SUN STONE CROWD PANEL */
+  .sunstone-wrap{display:flex; flex-direction:column; align-items:center; padding-top:6px;}
+  .sunstone{position:relative; width:250px; height:250px;}
+  .sunstone svg{width:100%; height:100%;}
+  .zone-node{
+    position:absolute; width:58px; height:58px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center; text-align:center;
+    font-family:'IBM Plex Mono', monospace; font-size:9.5px; font-weight:500;
+    cursor:pointer; border:2px solid var(--obsidian); transition:.2s; line-height:1.2;
+    color:#0d0d0d;
+  }
+  .zone-node:hover{transform:scale(1.08);}
+  .status-low{background:var(--turquoise);}
+  .status-moderate{background:var(--marigold);}
+  .status-high{background:var(--clay); color:var(--bone);}
+  .status-severe{background:var(--alert); color:var(--bone); animation:pulse 1.4s infinite;}
+  @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(196,59,59,.6);} 50%{box-shadow:0 0 0 8px rgba(196,59,59,0);}}
+
+  .legend{display:flex; gap:14px; margin-top:18px; flex-wrap:wrap; justify-content:center;}
+  .legend span{font-size:11px; color:var(--stone); display:flex; align-items:center; gap:5px;}
+  .dot{width:9px; height:9px; border-radius:50%; display:inline-block;}
+
+  .escalation-banner{
+    margin-top:16px; border-radius:10px; padding:12px 14px; font-size:13px;
+    border:1px solid var(--alert); background:rgba(196,59,59,.12); display:none;
+  }
+  .escalation-banner.show{display:block;}
+  .escalation-banner b{color:var(--alert);}
+
+  /* INCIDENT LOG */
+  .incident-form{display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:12px;}
+  .incident-form select, .incident-form input{
+    background:var(--obsidian); border:1px solid var(--line); color:var(--bone);
+    border-radius:8px; padding:8px 10px; font-size:12.5px;
+  }
+  .incident-form button{
+    grid-column:1/3; background:var(--marigold); color:var(--obsidian); border:none;
+    border-radius:8px; padding:9px; font-family:'Space Grotesk',sans-serif; font-weight:600;
+    cursor:pointer; font-size:13px;
+  }
+  .incident-item{
+    font-size:12.5px; border-left:3px solid var(--turquoise); padding:6px 10px; margin-bottom:6px;
+    background:var(--obsidian); border-radius:0 8px 8px 0;
+  }
+  .incident-item.sev-high{border-color:var(--alert);}
+  .incident-item.sev-medium{border-color:var(--marigold);}
+  .incident-item small{color:var(--stone); display:block; margin-top:2px;}
+
+  /* PHRASE CARD */
+  .phrase-row{display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--line); font-size:13px; gap:12px;}
+  .phrase-row:last-child{border-bottom:none;}
+  .phrase-en{color:var(--stone); font-size:11.5px;}
+  .phrase-target{font-weight:500; text-align:right;}
+
+  footer{margin-top:30px; text-align:center; color:var(--stone); font-size:11.5px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div>
+      <div class="brand-eyebrow" id="brandEyebrow">MatchDay IQ · Operations Console</div>
+      <h1>Estadio Banorte <span style="color:var(--stone); font-weight:500;">/ Azteca</span></h1>
+      <div class="venue-sub" id="venueSub">Mexico City · FIFA World Cup 2026 · Simulated data</div>
+    </div>
+    <div class="clock">
+      <span id="modeLabel"><span id="signedInLabel">SIGNED IN AS</span> <b id="whoAmI" style="color:var(--bone);">—</b></span>
+      <b id="phaseClock">Pre-Match</b>
+      <span id="syncStatus" style="font-size:10.5px; color:var(--turquoise);">● loading…</span>
+      <button id="logoutBtn" style="margin-top:6px; background:none; border:1px solid var(--line); color:var(--stone); border-radius:6px; padding:4px 10px; font-size:11px; font-family:'IBM Plex Mono',monospace; cursor:pointer;">Sign out</button>
+    </div>
+  </header>
+
+  <div class="controls">
+    <div class="segmented" id="personaToggle">
+      <button data-persona="organizer" class="active">Organizer</button>
+      <button data-persona="volunteer">Volunteer</button>
+    </div>
+    <select id="langSelect">
+      <option value="en">English</option>
+      <option value="es">Español (MX)</option>
+      <option value="de">Deutsch</option>
+      <option value="hi">हिन्दी</option>
+    </select>
+  </div>
+
+  <div class="phase-tabs" id="phaseTabs">
+    <button data-phase="pre" class="active">Pre-Match</button>
+    <button data-phase="ongoing">Ongoing</button>
+    <button data-phase="post">Post-Match</button>
+  </div>
+
+  <div class="grid">
+    <!-- LEFT: TASKS -->
+    <div class="panel">
+      <h2 id="taskTitle">Pre-Match Checklist — Organizer</h2>
+      <p class="hint" id="taskHint">Readiness sign-off before gates open.</p>
+      <div id="taskList"></div>
+    </div>
+
+    <!-- RIGHT: CROWD / INCIDENT / PHRASES -->
+    <div style="display:flex; flex-direction:column; gap:20px;">
+
+      <div class="panel">
+        <h2 id="zoneStatusTitle">Zone Status — Sun Stone Monitor</h2>
+        <p class="hint" id="zoneHint">Tap a zone to cycle its status and test escalation logic.</p>
+        <div class="sunstone-wrap">
+          <div class="sunstone" id="sunstone"></div>
+          <div class="legend">
+            <span><i class="dot" style="background:var(--turquoise)"></i><span id="legendLow">Low</span></span>
+            <span><i class="dot" style="background:var(--marigold)"></i><span id="legendModerate">Moderate</span></span>
+            <span><i class="dot" style="background:var(--clay)"></i><span id="legendHigh">High</span></span>
+            <span><i class="dot" style="background:var(--alert)"></i><span id="legendSevere">Severe</span></span>
+          </div>
+        </div>
+        <div class="escalation-banner" id="escBanner"></div>
+      </div>
+
+      <div class="panel">
+        <h2 id="incidentLogTitle">Incident Log</h2>
+        <div class="incident-form">
+          <select id="incType">
+            <option value="Medical" id="incTypeMedical">Medical</option>
+            <option value="Security" id="incTypeSecurity">Security</option>
+            <option value="Lost & Found" id="incTypeLostFound">Lost & Found</option>
+            <option value="Facilities" id="incTypeFacilities">Facilities</option>
+            <option value="Crowd Flow" id="incTypeCrowdFlow">Crowd Flow</option>
+          </select>
+          <select id="incSeverity">
+            <option value="low" id="sevLowOpt">Low</option>
+            <option value="medium" id="sevMediumOpt">Medium</option>
+            <option value="high" id="sevHighOpt">High</option>
+          </select>
+          <input id="incLocation" placeholder="Location (e.g. Gate C)" style="grid-column:1/3;" />
+          <button onclick="logIncident()" id="logIncidentBtn">Log Incident</button>
+        </div>
+        <div id="incidentList"></div>
+      </div>
+
+      <div class="panel">
+        <h2 id="phraseCardTitle">Fan Phrase Card</h2>
+        <p class="hint" id="phraseCardHint">Quick multilingual lines for gate/volunteer use.</p>
+        <div id="phraseCard"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <footer id="footerText">MatchDay IQ — simulated training console · Not connected to live stadium systems</footer>
+</div>
+
+<script>
+/* ---------------- DATA ---------------- */
+// Each task text is stored as {en, es, de, hi} so the checklist re-renders
+// fully translated when the language switcher changes. The tag (T-72h, Live, etc.)
+// stays as-is across languages — it's a timing code, not prose.
+const tasks = {
+  pre: {
+    organizer: [
+      ["T-72h", {en:"Confirm staffing roster vs. required headcount per zone", es:"Confirmar el roster de personal frente al aforo requerido por zona", de:"Personalplan mit erforderlicher Kopfzahl pro Zone abgleichen", hi:"प्रत्येक ज़ोन के लिए आवश्यक हेडकाउंट के मुकाबले स्टाफिंग रोस्टर की पुष्टि करें"}],
+      ["T-48h", {en:"Accessibility audit: step-free routes, elevators, quiet rooms", es:"Auditoría de accesibilidad: rutas sin escalones, elevadores, salas tranquilas", de:"Barrierefreiheitsprüfung: stufenfreie Wege, Aufzüge, Ruheräume", hi:"सुगम्यता ऑडिट: सीढ़ी-रहित मार्ग, लिफ्ट, शांत कक्ष"}],
+      ["T-48h", {en:"Resolve/flag legal or commercial disputes before gates open", es:"Resolver/marcar disputas legales o comerciales antes de abrir puertas", de:"Rechtliche oder kommerzielle Streitfälle vor Toröffnung klären/melden", hi:"गेट खुलने से पहले कानूनी या वाणिज्यिक विवादों को हल/चिह्नित करें"}],
+      ["T-24h", {en:"Transit coordination with Metro/Light Rail authority", es:"Coordinación de tránsito con la autoridad de Metro/Tren Ligero", de:"Verkehrskoordination mit der Metro-/Stadtbahnbehörde", hi:"मेट्रो/लाइट रेल प्राधिकरण के साथ परिवहन समन्वय"}],
+      ["T-24h", {en:"Security briefing: perimeter, bag policy, credentials", es:"Sesión informativa de seguridad: perímetro, política de bolsos, credenciales", de:"Sicherheitsbriefing: Perimeter, Taschenrichtlinie, Akkreditierungen", hi:"सुरक्षा ब्रीफिंग: परिधि, बैग नीति, प्रमाणीकरण"}],
+      ["T-12h", {en:"Final resource allocation across zones + translation desks", es:"Asignación final de recursos por zonas + mesas de traducción", de:"Endgültige Ressourcenzuteilung über Zonen + Übersetzungsschalter", hi:"ज़ोन + अनुवाद डेस्क में अंतिम संसाधन आवंटन"}],
+      ["T-3h", {en:"Gates-open readiness sign-off: Security / Medical / Accessibility", es:"Aprobación final de apertura de puertas: Seguridad / Médico / Accesibilidad", de:"Freigabe zur Toröffnung: Sicherheit / Medizin / Barrierefreiheit", hi:"गेट-ओपन तैयारी की अंतिम स्वीकृति: सुरक्षा / चिकित्सा / सुगम्यता"}],
+    ],
+    volunteer: [
+      ["T-24h", {en:"Attend shift briefing — zone, gate, and role", es:"Asistir a la sesión informativa del turno — zona, puerta y rol", de:"An der Schichtbesprechung teilnehmen — Zone, Tor und Rolle", hi:"शिफ्ट ब्रीफिंग में भाग लें — ज़ोन, गेट और भूमिका"}],
+      ["T-24h", {en:"Review venue map and accessible routing points", es:"Revisar el mapa del recinto y los puntos de ruta accesibles", de:"Veranstaltungsplan und barrierefreie Wegpunkte prüfen", hi:"स्थल मानचित्र और सुगम्य मार्ग बिंदुओं की समीक्षा करें"}],
+      ["T-12h", {en:"Radio / comms check-in and escalation contact confirmed", es:"Confirmar radio / comunicaciones y contacto de escalamiento", de:"Funk-/Kommunikationscheck und Eskalationskontakt bestätigt", hi:"रेडियो / संचार चेक-इन और एस्केलेशन संपर्क की पुष्टि"}],
+      ["T-6h", {en:"Review multilingual phrase card for your gate", es:"Revisar la tarjeta de frases multilingüe de tu puerta", de:"Mehrsprachige Sprachkarte für Ihr Tor durchsehen", hi:"अपने गेट के लिए बहुभाषी फ्रेज़ कार्ड की समीक्षा करें"}],
+      ["T-3h", {en:"Report to post 90 min early — vest, radio, badge check", es:"Presentarse en el puesto 90 min antes — chaleco, radio, credencial", de:"90 Minuten früher am Posten melden — Weste, Funkgerät, Ausweischeck", hi:"पोस्ट पर 90 मिनट पहले रिपोर्ट करें — वेस्ट, रेडियो, बैज जांच"}],
+      ["T-1h", {en:"Final zone walk-through with supervisor, note hazards", es:"Recorrido final de la zona con el supervisor, anotar riesgos", de:"Letzter Zonenrundgang mit Vorgesetztem, Gefahren notieren", hi:"पर्यवेक्षक के साथ अंतिम ज़ोन वॉक-थ्रू, खतरों को नोट करें"}],
+    ]
+  },
+  ongoing: {
+    organizer: [
+      ["Live", {en:"Monitor crowd status every 15 min during ingress/egress", es:"Monitorear el estado de la multitud cada 15 min durante entrada/salida", de:"Menschenmenge alle 15 Min. beim Ein-/Auslass überwachen", hi:"प्रवेश/निकास के दौरान हर 15 मिनट में भीड़ की स्थिति की निगरानी करें"}],
+      ["Live", {en:"Reallocate staff to high-density zones in real time", es:"Reasignar personal a zonas de alta densidad en tiempo real", de:"Personal in Echtzeit in dichte Zonen umverteilen", hi:"उच्च-घनत्व वाले ज़ोन में वास्तविक समय में स्टाफ को पुनः आवंटित करें"}],
+      ["Half-time", {en:"Sync transit status ahead of interval surge", es:"Sincronizar el estado del tránsito antes del pico del entretiempo", de:"Verkehrsstatus vor dem Halbzeit-Andrang synchronisieren", hi:"मध्यांतर की भीड़ से पहले परिवहन स्थिति को सिंक करें"}],
+      ["Trigger", {en:"🔴 Severe density → redirect flow, notify Security + Transit", es:"🔴 Densidad severa → redirigir el flujo, notificar a Seguridad + Tránsito", de:"🔴 Schwere Dichte → Fluss umleiten, Sicherheit + Verkehr benachrichtigen", hi:"🔴 गंभीर घनत्व → प्रवाह पुनर्निर्देशित करें, सुरक्षा + परिवहन को सूचित करें"}],
+      ["Trigger", {en:"Any incident logged High severity → auto-escalate to Ops Center", es:"Cualquier incidente de severidad alta → escalar automáticamente al Centro de Operaciones", de:"Jeder Vorfall mit hoher Schwere → automatisch an die Einsatzzentrale eskalieren", hi:"उच्च गंभीरता वाली कोई भी घटना → स्वतः ऑप्स सेंटर को अपग्रेड करें"}],
+    ],
+    volunteer: [
+      ["Live", {en:"Hold assigned post unless redirected by supervisor", es:"Mantener el puesto asignado a menos que el supervisor indique lo contrario", de:"Zugewiesenen Posten halten, sofern nicht vom Vorgesetzten umgeleitet", hi:"पर्यवेक्षक द्वारा पुनर्निर्देशित न होने तक निर्धारित पोस्ट पर रहें"}],
+      ["Live", {en:"Provide wayfinding, concessions, accessibility guidance", es:"Brindar orientación de ruta, concesiones y guía de accesibilidad", de:"Wegweisung, Verpflegungsstände und Barrierefreiheitshinweise geben", hi:"मार्गदर्शन, कन्सेशन जानकारी और सुगम्यता मार्गदर्शन प्रदान करें"}],
+      ["If needed", {en:"Report density concerns to supervisor — do not self-manage crowd", es:"Informar preocupaciones de densidad al supervisor — no manejar la multitud por cuenta propia", de:"Dichte-Bedenken dem Vorgesetzten melden — Menschenmenge nicht selbst verwalten", hi:"घनत्व संबंधी चिंताओं की सूचना पर्यवेक्षक को दें — स्वयं भीड़ प्रबंधित न करें"}],
+      ["If needed", {en:"Log any incident: type, severity, exact location", es:"Registrar cualquier incidente: tipo, severidad, ubicación exacta", de:"Jeden Vorfall protokollieren: Art, Schwere, genauer Standort", hi:"किसी भी घटना को दर्ज करें: प्रकार, गंभीरता, सटीक स्थान"}],
+      ["Critical", {en:"Evacuation-level event → defer to PA + law enforcement only", es:"Evento de nivel de evacuación → ceder únicamente al sistema de altavoces + fuerzas del orden", de:"Ereignis auf Evakuierungsniveau → nur an Lautsprecheranlage + Polizei verweisen", hi:"निकासी-स्तर की घटना → केवल पीए सिस्टम + कानून प्रवर्तन को सौंपें"}],
+    ]
+  },
+  post: {
+    organizer: [
+      ["T+0", {en:"Activate egress plan, check transit surge readiness", es:"Activar el plan de salida, verificar la preparación ante el pico de tránsito", de:"Auslassplan aktivieren, Bereitschaft für Verkehrsansturm prüfen", hi:"निकास योजना सक्रिय करें, परिवहन उछाल की तैयारी जांचें"}],
+      ["T+30m", {en:"Monitor Metro interchange for egress bottlenecks", es:"Monitorear el intercambiador del Metro por cuellos de botella de salida", de:"Metro-Umsteigepunkt auf Ausgangs-Engpässe überwachen", hi:"निकास बाधाओं के लिए मेट्रो इंटरचेंज की निगरानी करें"}],
+      ["T+2h", {en:"Close out all incident log entries with resolution notes", es:"Cerrar todas las entradas del registro de incidentes con notas de resolución", de:"Alle Vorfallseinträge mit Lösungsvermerken abschließen", hi:"समाधान टिप्पणियों के साथ सभी घटना लॉग प्रविष्टियाँ बंद करें"}],
+      ["T+6h", {en:"Facilities handover: cleaning + structural check", es:"Entrega de instalaciones: limpieza + revisión estructural", de:"Übergabe der Einrichtungen: Reinigung + Strukturprüfung", hi:"सुविधा हैंडओवर: सफाई + संरचनात्मक जांच"}],
+      ["T+24h", {en:"Full After-Action Review: crowd trends, incidents, staffing", es:"Revisión completa posterior a la acción: tendencias de multitud, incidentes, personal", de:"Vollständige Nachbesprechung: Besucherströme, Vorfälle, Personal", hi:"पूर्ण आफ्टर-एक्शन समीक्षा: भीड़ के रुझान, घटनाएं, स्टाफिंग"}],
+    ],
+    volunteer: [
+      ["Post", {en:"Assist egress flow — directional guidance only", es:"Ayudar en el flujo de salida — solo orientación direccional", de:"Beim Auslassfluss helfen — nur Richtungshinweise", hi:"निकास प्रवाह में सहायता करें — केवल दिशात्मक मार्गदर्शन"}],
+      ["Post", {en:"Lost & found intake, handover to venue desk", es:"Recepción de objetos perdidos, entrega al mostrador del recinto", de:"Fundsachen aufnehmen, an die Info-Theke übergeben", hi:"खोया-पाया प्राप्ति, स्थल डेस्क को हैंडओवर"}],
+      ["Post", {en:"Report shift observations: near-misses, signage, feedback", es:"Informar observaciones del turno: casi-incidentes, señalización, comentarios", de:"Schichtbeobachtungen melden: Beinaheunfälle, Beschilderung, Feedback", hi:"शिफ्ट अवलोकन रिपोर्ट करें: नियर-मिस, साइनेज, फीडबैक"}],
+      ["Post", {en:"Equipment return and shift sign-off", es:"Devolución de equipo y cierre de turno", de:"Ausrüstungsrückgabe und Schichtabmeldung", hi:"उपकरण वापसी और शिफ्ट साइन-ऑफ"}],
+    ]
+  }
+};
+
+const phaseHints = {
+  pre: {
+    organizer: {en:"Readiness sign-off across all functions before gates open.", es:"Aprobación de preparación en todas las funciones antes de abrir puertas.", de:"Bereitschaftsfreigabe aller Funktionen vor Toröffnung.", hi:"गेट खुलने से पहले सभी कार्यों में तैयारी की स्वीकृति।"},
+    volunteer: {en:"Get briefed, equipped, and positioned before fans arrive.", es:"Recibe la sesión informativa, equípate y posiciónate antes de que lleguen los aficionados.", de:"Vor Ankunft der Fans einweisen, ausrüsten und positionieren lassen.", hi:"प्रशंसकों के आने से पहले ब्रीफिंग लें, उपकरण लें और स्थान लें।"}
+  },
+  ongoing: {
+    organizer: {en:"Real-time monitoring and resource reallocation during live play.", es:"Monitoreo en tiempo real y reasignación de recursos durante el juego en vivo.", de:"Echtzeitüberwachung und Ressourcenumverteilung während des laufenden Spiels.", hi:"लाइव खेल के दौरान वास्तविक समय की निगरानी और संसाधन पुनर्आवंटन।"},
+    volunteer: {en:"Support fans, hold position, escalate — never self-manage crowd or security.", es:"Apoya a los aficionados, mantén tu posición, escala — nunca manejes la multitud o seguridad por cuenta propia.", de:"Fans unterstützen, Position halten, eskalieren — Menschenmenge oder Sicherheit niemals selbst verwalten.", hi:"प्रशंसकों का समर्थन करें, स्थिति बनाए रखें, एस्केलेट करें — भीड़ या सुरक्षा को कभी स्वयं प्रबंधित न करें।"}
+  },
+  post: {
+    organizer: {en:"Safe egress, incident closure, and structured debrief.", es:"Salida segura, cierre de incidentes y sesión informativa estructurada.", de:"Sichere Ausgänge, Vorfallabschluss und strukturierte Nachbesprechung.", hi:"सुरक्षित निकासी, घटना समापन, और संरचित डीब्रीफिंग।"},
+    volunteer: {en:"Support egress, wrap incidents, hand back equipment.", es:"Apoya la salida, cierra incidentes, devuelve el equipo.", de:"Beim Auslass helfen, Vorfälle abschließen, Ausrüstung zurückgeben.", hi:"निकासी में सहायता करें, घटनाएं समाप्त करें, उपकरण वापस करें।"}
+  }
+};
+
+// Static UI chrome strings — everything outside the checklist/phrases data above.
+const UI = {
+  en: {
+    eyebrow:"MatchDay IQ · Operations Console", venueSub:"Mexico City · FIFA World Cup 2026 · Simulated data",
+    signedInAs:"SIGNED IN AS", signOut:"Sign out", organizer:"Organizer", volunteer:"Volunteer",
+    phasePre:"Pre-Match", phaseOngoing:"Ongoing", phasePost:"Post-Match", checklistLabel:"Checklist",
+    zoneStatusTitle:"Zone Status — Sun Stone Monitor", zoneHint:"Tap a zone to cycle its status and test escalation logic.",
+    legendLow:"Low", legendModerate:"Moderate", legendHigh:"High", legendSevere:"Severe",
+    incidentLogTitle:"Incident Log", incTypeMedical:"Medical", incTypeSecurity:"Security", incTypeLostFound:"Lost & Found",
+    incTypeFacilities:"Facilities", incTypeCrowdFlow:"Crowd Flow", sevLow:"Low", sevMedium:"Medium", sevHigh:"High",
+    locationPlaceholder:"Location (e.g. Gate C)", logIncidentBtn:"Log Incident", noIncidents:"No incidents logged yet.",
+    resolved:"Resolved", resolveBtn:"Resolve", autoEscalated:"Auto-escalated to Ops Center",
+    phraseCardTitle:"Fan Phrase Card", phraseCardHint:"Quick multilingual lines for gate/volunteer use.",
+    footer:"MatchDay IQ — simulated training console · Not connected to live stadium systems",
+    lockedTooltip:"Locked — sign in as this role to switch",
+    syncLoading:"loading…", syncSynced:"synced", syncOffline:"offline — is the server running?",
+    syncSaveFailed:"save failed — retry", syncUpdateFailed:"update failed — retry",
+    syncLogFailed:"log failed — retry", syncResolveFailed:"resolve failed (organizer only)",
+    escalationOrganizer:z=>`<b>ESCALATION:</b> Severe density at <b>${z}</b>. Auto-notify Security + Transit Liaison. Reallocate staff and open contingency lanes now.`,
+    escalationVolunteer:z=>`<b>ALERT:</b> ${z} is at capacity. Do not manage crowd yourself — report to your supervisor and redirect fans to the nearest alternate gate.`,
+  },
+  es: {
+    eyebrow:"MatchDay IQ · Consola de Operaciones", venueSub:"Ciudad de México · Copa Mundial FIFA 2026 · Datos simulados",
+    signedInAs:"SESIÓN INICIADA COMO", signOut:"Cerrar sesión", organizer:"Organizador", volunteer:"Voluntario",
+    phasePre:"Antes del partido", phaseOngoing:"En curso", phasePost:"Después del partido", checklistLabel:"Lista de Verificación",
+    zoneStatusTitle:"Estado de Zonas — Monitor Piedra del Sol", zoneHint:"Toca una zona para cambiar su estado y probar la lógica de escalamiento.",
+    legendLow:"Bajo", legendModerate:"Moderado", legendHigh:"Alto", legendSevere:"Severo",
+    incidentLogTitle:"Registro de Incidentes", incTypeMedical:"Médico", incTypeSecurity:"Seguridad", incTypeLostFound:"Objetos Perdidos",
+    incTypeFacilities:"Instalaciones", incTypeCrowdFlow:"Flujo de Multitud", sevLow:"Bajo", sevMedium:"Medio", sevHigh:"Alto",
+    locationPlaceholder:"Ubicación (ej. Puerta C)", logIncidentBtn:"Registrar Incidente", noIncidents:"Aún no se han registrado incidentes.",
+    resolved:"Resuelto", resolveBtn:"Resolver", autoEscalated:"Escalado automáticamente al Centro de Operaciones",
+    phraseCardTitle:"Tarjeta de Frases para Aficionados", phraseCardHint:"Frases rápidas multilingües para uso en puertas/voluntariado.",
+    footer:"MatchDay IQ — consola de entrenamiento simulada · No conectada a sistemas reales del estadio",
+    lockedTooltip:"Bloqueado — inicia sesión con este rol para cambiar",
+    syncLoading:"cargando…", syncSynced:"sincronizado", syncOffline:"sin conexión — ¿el servidor está en ejecución?",
+    syncSaveFailed:"error al guardar — reintentar", syncUpdateFailed:"error al actualizar — reintentar",
+    syncLogFailed:"error al registrar — reintentar", syncResolveFailed:"error al resolver (solo organizador)",
+    escalationOrganizer:z=>`<b>ESCALAMIENTO:</b> Densidad severa en <b>${z}</b>. Notificar automáticamente a Seguridad + Enlace de Transporte. Reasignar personal y abrir carriles de contingencia ahora.`,
+    escalationVolunteer:z=>`<b>ALERTA:</b> ${z} está a capacidad máxima. No manejes a la multitud tú mismo — reporta a tu supervisor y redirige a los aficionados a la puerta alterna más cercana.`,
+  },
+  de: {
+    eyebrow:"MatchDay IQ · Betriebskonsole", venueSub:"Mexiko-Stadt · FIFA-Weltmeisterschaft 2026 · Simulierte Daten",
+    signedInAs:"ANGEMELDET ALS", signOut:"Abmelden", organizer:"Organisator", volunteer:"Freiwilliger",
+    phasePre:"Vor dem Spiel", phaseOngoing:"Laufend", phasePost:"Nach dem Spiel", checklistLabel:"Checkliste",
+    zoneStatusTitle:"Zonenstatus — Sonnenstein-Monitor", zoneHint:"Tippen Sie auf eine Zone, um ihren Status zu ändern und die Eskalationslogik zu testen.",
+    legendLow:"Niedrig", legendModerate:"Mäßig", legendHigh:"Hoch", legendSevere:"Schwer",
+    incidentLogTitle:"Vorfallprotokoll", incTypeMedical:"Medizinisch", incTypeSecurity:"Sicherheit", incTypeLostFound:"Fundbüro",
+    incTypeFacilities:"Einrichtungen", incTypeCrowdFlow:"Besucherstrom", sevLow:"Niedrig", sevMedium:"Mittel", sevHigh:"Hoch",
+    locationPlaceholder:"Standort (z. B. Tor C)", logIncidentBtn:"Vorfall melden", noIncidents:"Noch keine Vorfälle gemeldet.",
+    resolved:"Gelöst", resolveBtn:"Lösen", autoEscalated:"Automatisch an die Einsatzzentrale eskaliert",
+    phraseCardTitle:"Fan-Sprachkarte", phraseCardHint:"Schnelle mehrsprachige Sätze für Tor-/Freiwilligeneinsatz.",
+    footer:"MatchDay IQ — simulierte Trainingskonsole · Nicht mit echten Stadionsystemen verbunden",
+    lockedTooltip:"Gesperrt — melden Sie sich mit dieser Rolle an, um zu wechseln",
+    syncLoading:"lädt…", syncSynced:"synchronisiert", syncOffline:"offline — läuft der Server?",
+    syncSaveFailed:"Speichern fehlgeschlagen — erneut versuchen", syncUpdateFailed:"Aktualisierung fehlgeschlagen — erneut versuchen",
+    syncLogFailed:"Meldung fehlgeschlagen — erneut versuchen", syncResolveFailed:"Lösen fehlgeschlagen (nur Organisator)",
+    escalationOrganizer:z=>`<b>ESKALATION:</b> Schwere Dichte bei <b>${z}</b>. Sicherheit + Verkehrsverbindung automatisch benachrichtigen. Personal jetzt umverteilen und Ausweichspuren öffnen.`,
+    escalationVolunteer:z=>`<b>ALARM:</b> ${z} ist an der Kapazitätsgrenze. Verwalten Sie die Menge nicht selbst — melden Sie sich bei Ihrem Vorgesetzten und leiten Sie die Fans zum nächsten Ausweichtor um.`,
+  },
+  hi: {
+    eyebrow:"मैचडे आईक्यू · संचालन कंसोल", venueSub:"मेक्सिको सिटी · फीफा विश्व कप 2026 · सिम्युलेटेड डेटा",
+    signedInAs:"इस रूप में साइन इन", signOut:"साइन आउट करें", organizer:"आयोजक", volunteer:"स्वयंसेवक",
+    phasePre:"मैच-पूर्व", phaseOngoing:"चल रहा है", phasePost:"मैच-पश्चात", checklistLabel:"चेकलिस्ट",
+    zoneStatusTitle:"ज़ोन स्थिति — सन स्टोन मॉनिटर", zoneHint:"स्थिति बदलने और एस्केलेशन लॉजिक जांचने के लिए किसी ज़ोन पर टैप करें।",
+    legendLow:"कम", legendModerate:"मध्यम", legendHigh:"उच्च", legendSevere:"गंभीर",
+    incidentLogTitle:"घटना लॉग", incTypeMedical:"चिकित्सा", incTypeSecurity:"सुरक्षा", incTypeLostFound:"खोया-पाया",
+    incTypeFacilities:"सुविधाएं", incTypeCrowdFlow:"भीड़ प्रवाह", sevLow:"कम", sevMedium:"मध्यम", sevHigh:"उच्च",
+    locationPlaceholder:"स्थान (उदा. गेट सी)", logIncidentBtn:"घटना दर्ज करें", noIncidents:"अभी तक कोई घटना दर्ज नहीं हुई।",
+    resolved:"हल हो गया", resolveBtn:"हल करें", autoEscalated:"स्वतः ऑप्स सेंटर को अपग्रेड किया गया",
+    phraseCardTitle:"फैन फ्रेज़ कार्ड", phraseCardHint:"गेट/स्वयंसेवक उपयोग के लिए त्वरित बहुभाषी वाक्य।",
+    footer:"मैचडे आईक्यू — सिम्युलेटेड प्रशिक्षण कंसोल · लाइव स्टेडियम सिस्टम से जुड़ा नहीं",
+    lockedTooltip:"लॉक — इस भूमिका से साइन इन करके बदलें",
+    syncLoading:"लोड हो रहा है…", syncSynced:"समन्वयित", syncOffline:"ऑफ़लाइन — क्या सर्वर चल रहा है?",
+    syncSaveFailed:"सहेजना विफल — पुनः प्रयास करें", syncUpdateFailed:"अपडेट विफल — पुनः प्रयास करें",
+    syncLogFailed:"लॉग विफल — पुनः प्रयास करें", syncResolveFailed:"हल करना विफल (केवल आयोजक)",
+    escalationOrganizer:z=>`<b>एस्केलेशन:</b> <b>${z}</b> में गंभीर घनत्व। सुरक्षा + परिवहन संपर्क को स्वतः सूचित करें। अभी स्टाफ का पुनः आवंटन करें और आपातकालीन मार्ग खोलें।`,
+    escalationVolunteer:z=>`<b>अलर्ट:</b> ${z} क्षमता पर है। स्वयं भीड़ को प्रबंधित न करें — अपने पर्यवेक्षक को रिपोर्ट करें और प्रशंसकों को निकटतम वैकल्पिक गेट की ओर भेजें।`,
+  },
+};
+// t(key) looks up the current language, falling back to English if a key is ever missing.
+function t(key){ return (UI[currentLang] && UI[currentLang][key] !== undefined) ? UI[currentLang][key] : UI.en[key]; }
+
+const zones = [
+  {id:"gateA", name:"Gate A", angle:-90},
+  {id:"gateC", name:"Gate C", angle:-30},
+  {id:"metro", name:"Metro Link", angle:30},
+  {id:"concourse", name:"Concourse", angle:90},
+  {id:"vip", name:"Palcos/VIP", angle:150},
+  {id:"gateD", name:"Gate D", angle:210},
+];
+const statusCycle = ["low","moderate","high","severe"];
+let zoneState = {};
+zones.forEach(z => zoneState[z.id] = "low"); // defaults, overwritten by storage if present
+
+const phrases = [
+  ["Please proceed to Gate D", {es:"Por favor diríjanse a la Puerta D", de:"Bitte gehen Sie zu Tor D", hi:"कृपया गेट डी की ओर बढ़ें"}],
+  ["This area is closed for safety", {es:"Esta área está cerrada por seguridad", de:"Dieser Bereich ist aus Sicherheitsgründen gesperrt", hi:"यह क्षेत्र सुरक्षा कारणों से बंद है"}],
+  ["Medical assistance is on the way", {es:"La ayuda médica está en camino", de:"Medizinische Hilfe ist unterwegs", hi:"चिकित्सा सहायता आ रही है"}],
+  ["Follow staff instructions calmly", {es:"Sigan las instrucciones del personal con calma", de:"Bitte folgen Sie ruhig den Anweisungen des Personals", hi:"कृपया शांति से कर्मचारियों के निर्देशों का पालन करें"}],
+  ["Lost and found is at Gate A", {es:"Objetos perdidos está en la Puerta A", de:"Das Fundbüro befindet sich am Tor A", hi:"खोया-पाया केंद्र गेट ए पर स्थित है"}],
+];
+
+/* ---------------- STATE ---------------- */
+let currentPhase = "pre";
+let currentPersona = "organizer";
+let currentLang = "en";
+let taskState = {}; // personal per user, loaded from /api/preferences/:userId
+let sessionUser = null; // { id, username, role, displayName } from /api/auth/me
+
+/* ---------------- BACKEND API CLIENT ---------------- */
+const API = "/api";
+
+function setSync(label, ok){
+  const el = document.getElementById("syncStatus");
+  el.textContent = "● " + label;
+  el.style.color = ok ? "var(--turquoise)" : "var(--stone)";
+}
+
+async function apiGet(pathname){
+  const res = await fetch(API + pathname);
+  if(!res.ok) throw new Error("GET " + pathname + " failed");
+  return res.json();
+}
+async function apiPost(pathname, body){
+  const res = await fetch(API + pathname, {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: body ? JSON.stringify(body) : undefined
+  });
+  if(!res.ok) throw new Error("POST " + pathname + " failed");
+  return res.json();
+}
+async function apiPut(pathname, body){
+  const res = await fetch(API + pathname, {
+    method: "PUT",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify(body)
+  });
+  if(!res.ok) throw new Error("PUT " + pathname + " failed");
+  return res.json();
+}
+
+async function checkAuth(){
+  const res = await fetch(API + "/auth/me");
+  if(!res.ok){
+    window.location.href = "/login.html";
+    throw new Error("Not authenticated");
+  }
+  sessionUser = await res.json();
+}
+
+async function loadZones(){
+  const rows = await apiGet("/zones"); // [{id, name, status}]
+  rows.forEach(r => { zoneState[r.id] = r.status; });
+}
+async function loadIncidents(){
+  const rows = await apiGet("/incidents"); // [{id, type, severity, location, created_at, resolved}]
+  incidents = rows.map(r => ({
+    id: r.id, type: r.type, sev: r.severity, loc: r.location, resolved: !!r.resolved,
+    time: new Date(r.created_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})
+  }));
+}
+async function loadPreferences(){
+  const prefs = await apiGet("/preferences/" + sessionUser.username);
+  taskState = prefs.checklist || {};
+  currentLang = prefs.lang || "en";
+}
+async function savePreferences(){
+  try{
+    await apiPut("/preferences/" + sessionUser.username, { checklist: taskState, lang: currentLang });
+    setSync(t("syncSynced"), true);
+  }catch(e){ setSync(t("syncSaveFailed"), false); }
+}
+
+async function resolveIncident(id){
+  try{
+    await apiPost(`/incidents/${id}/resolve`, null);
+    await loadIncidents();
+    renderIncidents();
+    setSync(t("syncSynced"), true);
+  }catch(e){
+    setSync(t("syncResolveFailed"), false);
+  }
+}
+
+/* ---------------- RENDER: TASKS ---------------- */
+function renderTasks(){
+  const phaseNames = {pre:t("phasePre"), ongoing:t("phaseOngoing"), post:t("phasePost")};
+  const personaNames = {organizer:t("organizer"), volunteer:t("volunteer")};
+  document.getElementById("taskTitle").textContent = `${phaseNames[currentPhase]} ${t("checklistLabel")} — ${personaNames[currentPersona]}`;
+  document.getElementById("taskHint").textContent = phaseHints[currentPhase][currentPersona][currentLang] || phaseHints[currentPhase][currentPersona].en;
+  document.getElementById("phaseClock").textContent = phaseNames[currentPhase];
+
+  const list = tasks[currentPhase][currentPersona];
+  const container = document.getElementById("taskList");
+  container.innerHTML = "";
+  list.forEach((item, i) => {
+    const [tag, textByLang] = item;
+    const text = textByLang[currentLang] || textByLang.en;
+    const key = `${currentPhase}:${currentPersona}:${i}`;
+    const div = document.createElement("div");
+    div.className = "task" + (taskState[key] ? " done" : "");
+    div.innerHTML = `<input type="checkbox" id="t${i}" ${taskState[key] ? "checked" : ""} />
+      <label for="t${i}"><span class="tag">${tag}</span>${text}</label>`;
+    const cb = div.querySelector("input");
+    cb.addEventListener("change", () => {
+      div.classList.toggle("done", cb.checked);
+      taskState[key] = cb.checked;
+      savePreferences();
+    });
+    container.appendChild(div);
+  });
+}
+
+/* ---------------- RENDER: SUN STONE ---------------- */
+function renderSunstone(){
+  const wrap = document.getElementById("sunstone");
+  wrap.innerHTML = `
+    <svg viewBox="0 0 250 250">
+      <circle cx="125" cy="125" r="118" fill="none" stroke="var(--line)" stroke-width="1.5"/>
+      <circle cx="125" cy="125" r="88" fill="none" stroke="var(--line)" stroke-width="1"/>
+      <circle cx="125" cy="125" r="42" fill="var(--obsidian)" stroke="var(--marigold)" stroke-width="1.5"/>
+      <text x="125" y="121" text-anchor="middle" font-family="Space Grotesk" font-size="11" fill="var(--bone)" font-weight="700">AZTECA</text>
+      <text x="125" y="136" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="var(--stone)">core status</text>
+    </svg>`;
+  const R = 100;
+  zones.forEach(z => {
+    const rad = z.angle * Math.PI/180;
+    const x = 125 + R*Math.cos(rad);
+    const y = 125 + R*Math.sin(rad);
+    const node = document.createElement("div");
+    node.className = `zone-node status-${zoneState[z.id]}`;
+    node.style.left = (x-29)+"px";
+    node.style.top = (y-29)+"px";
+    node.textContent = z.name;
+    node.title = t("zoneHint");
+    node.onclick = () => cycleZone(z.id);
+    wrap.appendChild(node);
+  });
+  updateEscalationBanner();
+}
+
+async function cycleZone(id){
+  try{
+    const result = await apiPost(`/zones/${id}/cycle`, null);
+    zoneState[id] = result.status;
+    renderSunstone();
+    setSync(t("syncSynced"), true);
+  }catch(e){
+    setSync(t("syncUpdateFailed"), false);
+  }
+}
+
+function updateEscalationBanner(){
+  const banner = document.getElementById("escBanner");
+  const severeZones = zones.filter(z => zoneState[z.id] === "severe").map(z=>z.name);
+  if(severeZones.length === 0){ banner.classList.remove("show"); return; }
+  banner.classList.add("show");
+  const zonesStr = severeZones.join(", ");
+  banner.innerHTML = currentPersona === "organizer"
+    ? t("escalationOrganizer")(zonesStr)
+    : t("escalationVolunteer")(zonesStr);
+}
+
+/* ---------------- INCIDENT LOG ---------------- */
+let incidents = [];
+// Incident "type" values stay fixed English strings in the database/API (Medical, Security, etc.)
+// regardless of UI language — only the on-screen label is translated, so data stays consistent.
+const INCIDENT_TYPE_KEY = {
+  "Medical":"incTypeMedical", "Security":"incTypeSecurity", "Lost & Found":"incTypeLostFound",
+  "Facilities":"incTypeFacilities", "Crowd Flow":"incTypeCrowdFlow"
+};
+const SEVERITY_KEY = { low:"sevLow", medium:"sevMedium", high:"sevHigh" };
+
+async function logIncident(){
+  const type = document.getElementById("incType").value;
+  const sev = document.getElementById("incSeverity").value;
+  const loc = document.getElementById("incLocation").value.trim() || "Unspecified location";
+  try{
+    await apiPost("/incidents", { type, severity: sev, location: loc });
+    await loadIncidents();
+    renderIncidents();
+    document.getElementById("incLocation").value = "";
+    setSync(t("syncSynced"), true);
+  }catch(e){
+    setSync(t("syncLogFailed"), false);
+  }
+}
+function renderIncidents(){
+  const el = document.getElementById("incidentList");
+  el.innerHTML = "";
+  if(incidents.length === 0){
+    el.innerHTML = `<p class="hint" style="margin:0;">${t("noIncidents")}</p>`;
+    return;
+  }
+  incidents.forEach(inc => {
+    const sevClass = inc.sev === "high" ? "sev-high" : (inc.sev === "medium" ? "sev-medium" : "");
+    const div = document.createElement("div");
+    div.className = `incident-item ${sevClass}`;
+    const typeLabel = t(INCIDENT_TYPE_KEY[inc.type]) || inc.type;
+    const sevLabel = (t(SEVERITY_KEY[inc.sev]) || inc.sev).toUpperCase();
+    const resolvedTag = inc.resolved ? ` · <span style='color:var(--turquoise)'>${t("resolved")}</span>` : "";
+    const resolveBtn = (!inc.resolved && sessionUser && sessionUser.role === "organizer")
+      ? `<button onclick="resolveIncident(${inc.id})" style="margin-left:8px; font-size:10.5px; background:none; border:1px solid var(--turquoise); color:var(--turquoise); border-radius:5px; padding:2px 7px; cursor:pointer;">${t("resolveBtn")}</button>`
+      : "";
+    div.innerHTML = `<strong>${typeLabel}</strong> — ${sevLabel} · ${inc.loc}${resolvedTag}${resolveBtn}<small>${inc.time}${inc.sev==='high' ? ' · ' + t("autoEscalated") : ''}</small>`;
+    el.appendChild(div);
+  });
+}
+
+/* ---------------- PHRASE CARD ---------------- */
+function renderPhrases(){
+  const el = document.getElementById("phraseCard");
+  el.innerHTML = "";
+  phrases.forEach(([en, tr]) => {
+    const target = currentLang === "en" ? en : tr[currentLang];
+    const div = document.createElement("div");
+    div.className = "phrase-row";
+    div.innerHTML = currentLang === "en"
+      ? `<span>${en}</span>`
+      : `<span class="phrase-en">${en}</span><span class="phrase-target">${target}</span>`;
+    el.appendChild(div);
+  });
+}
+
+/* ---------------- STATIC TRANSLATIONS ---------------- */
+// Updates every piece of UI chrome that isn't already covered by renderTasks/
+// renderSunstone/renderIncidents/renderPhrases. Called once on init and again
+// whenever the language selector changes, so switching language actually
+// re-labels the whole console instead of just the phrase card.
+function applyStaticTranslations(){
+  document.getElementById("brandEyebrow").textContent = t("eyebrow");
+  document.getElementById("venueSub").textContent = t("venueSub");
+  document.getElementById("signedInLabel").textContent = t("signedInAs");
+  document.getElementById("logoutBtn").textContent = t("signOut");
+
+  document.querySelectorAll("#personaToggle button").forEach(b => {
+    b.textContent = t(b.dataset.persona); // "organizer" / "volunteer" keys
+    if(b.dataset.persona !== (sessionUser && sessionUser.role)){
+      b.title = t("lockedTooltip");
+    }
+  });
+
+  const phaseTabKeys = {pre:"phasePre", ongoing:"phaseOngoing", post:"phasePost"};
+  document.querySelectorAll("#phaseTabs button").forEach(b => {
+    b.textContent = t(phaseTabKeys[b.dataset.phase]);
+  });
+
+  document.getElementById("zoneStatusTitle").textContent = t("zoneStatusTitle");
+  document.getElementById("zoneHint").textContent = t("zoneHint");
+  document.getElementById("legendLow").textContent = t("legendLow");
+  document.getElementById("legendModerate").textContent = t("legendModerate");
+  document.getElementById("legendHigh").textContent = t("legendHigh");
+  document.getElementById("legendSevere").textContent = t("legendSevere");
+
+  document.getElementById("incidentLogTitle").textContent = t("incidentLogTitle");
+  document.getElementById("incTypeMedical").textContent = t("incTypeMedical");
+  document.getElementById("incTypeSecurity").textContent = t("incTypeSecurity");
+  document.getElementById("incTypeLostFound").textContent = t("incTypeLostFound");
+  document.getElementById("incTypeFacilities").textContent = t("incTypeFacilities");
+  document.getElementById("incTypeCrowdFlow").textContent = t("incTypeCrowdFlow");
+  document.getElementById("sevLowOpt").textContent = t("sevLow");
+  document.getElementById("sevMediumOpt").textContent = t("sevMedium");
+  document.getElementById("sevHighOpt").textContent = t("sevHigh");
+  document.getElementById("incLocation").placeholder = t("locationPlaceholder");
+  document.getElementById("logIncidentBtn").textContent = t("logIncidentBtn");
+
+  document.getElementById("phraseCardTitle").textContent = t("phraseCardTitle");
+  document.getElementById("phraseCardHint").textContent = t("phraseCardHint");
+  document.getElementById("footerText").textContent = t("footer");
+
+  if(sessionUser){
+    document.getElementById("whoAmI").textContent = `${sessionUser.displayName} (${t(sessionUser.role)})`;
+  }
+}
+
+/* ---------------- EVENTS ---------------- */
+document.getElementById("personaToggle").addEventListener("click", e => {
+  if(e.target.tagName !== "BUTTON") return;
+  if(e.target.dataset.persona !== sessionUser.role) return; // locked to your account's role
+  document.querySelectorAll("#personaToggle button").forEach(b=>b.classList.remove("active"));
+  e.target.classList.add("active");
+  currentPersona = e.target.dataset.persona;
+  renderTasks();
+  updateEscalationBanner();
+});
+
+document.getElementById("logoutBtn").addEventListener("click", async () => {
+  await fetch(API + "/auth/logout", { method: "POST" });
+  window.location.href = "/login.html";
+});
+
+document.getElementById("phaseTabs").addEventListener("click", e => {
+  if(e.target.tagName !== "BUTTON") return;
+  document.querySelectorAll("#phaseTabs button").forEach(b=>b.classList.remove("active"));
+  e.target.classList.add("active");
+  currentPhase = e.target.dataset.phase;
+  renderTasks();
+});
+
+document.getElementById("langSelect").addEventListener("change", e => {
+  currentLang = e.target.value;
+  applyStaticTranslations();
+  renderTasks();
+  updateEscalationBanner();
+  renderIncidents();
+  renderPhrases();
+  savePreferences();
+});
+
+/* ---------------- INIT ---------------- */
+(async function init(){
+  setSync(t("syncLoading"), true);
+  try{
+    await checkAuth(); // redirects to /login.html if not authenticated
+  }catch(e){
+    return; // checkAuth already redirected
+  }
+
+  // Lock persona to the account's real role — no impersonating the other role.
+  currentPersona = sessionUser.role;
+  document.querySelectorAll("#personaToggle button").forEach(b => {
+    b.classList.toggle("active", b.dataset.persona === sessionUser.role);
+    if(b.dataset.persona !== sessionUser.role){
+      b.style.opacity = "0.35";
+      b.style.cursor = "not-allowed";
+    }
+  });
+
+  try{
+    await Promise.all([loadZones(), loadIncidents(), loadPreferences()]); // loadPreferences sets currentLang
+    setSync(t("syncSynced"), true);
+  }catch(e){
+    setSync(t("syncOffline"), false);
+  }
+  document.getElementById("langSelect").value = currentLang;
+  applyStaticTranslations(); // must run after currentLang + sessionUser are known
+  renderTasks();
+  renderSunstone();
+  renderIncidents();
+  renderPhrases();
+
+  // Poll shared state (zones + incidents) every 4s so multiple staff
+  // viewing the console at once stay in sync with each other.
+  setInterval(async () => {
+    try{
+      await Promise.all([loadZones(), loadIncidents()]);
+      renderSunstone();
+      renderIncidents();
+      setSync(t("syncSynced"), true);
+    }catch(e){
+      setSync(t("syncOffline"), false);
+    }
+  }, 4000);
+})();
+</script>
+</body>
+</html>
