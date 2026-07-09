@@ -1,15 +1,23 @@
 const path = require("path");
 const express = require("express");
 const session = require("express-session");
+const { createClient } = require("redis");
+const RedisStore = require("connect-redis").default;
 const bcrypt = require("bcryptjs");
 const db = require("./db");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+const redisClient = createClient({ url: process.env.REDIS_URL });
+redisClient.connect().catch((err) => {
+  console.error("Redis connection error:", err);
+});
+
 app.use(express.json());
 app.use(
   session({
+    store: new RedisStore({ client: redisClient }),
     secret: process.env.SESSION_SECRET || "matchday-iq-dev-secret-change-me",
     resave: false,
     saveUninitialized: false,
