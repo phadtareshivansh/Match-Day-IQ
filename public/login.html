@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>MatchDay IQ — Sign In</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --obsidian:#15161A;
+    --obsidian-2:#1D1F26;
+    --stone:#8B8478;
+    --bone:#EDE8DD;
+    --turquoise:#2CA6A0;
+    --marigold:#E3A73B;
+    --alert:#C43B3B;
+    --line: rgba(237,232,221,0.14);
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; min-height:100vh; display:flex; align-items:center; justify-content:center;
+    background: var(--obsidian); color: var(--bone); font-family:'Inter', sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .card{
+    width:100%; max-width:380px; background:var(--obsidian-2); border:1px solid var(--line);
+    border-radius:14px; padding:32px 28px; margin:20px;
+  }
+  .brand-eyebrow{
+    font-family:'IBM Plex Mono', monospace; font-size:11px; letter-spacing:.14em;
+    text-transform:uppercase; color:var(--turquoise); margin-bottom:8px;
+  }
+  h1{font-family:'Space Grotesk', sans-serif; font-weight:700; font-size:24px; margin:0 0 4px;}
+  .sub{color:var(--stone); font-size:13px; margin-bottom:24px;}
+  label{font-size:12.5px; color:var(--stone); display:block; margin-bottom:6px;}
+  input{
+    width:100%; background:var(--obsidian); border:1px solid var(--line); color:var(--bone);
+    border-radius:8px; padding:10px 12px; font-size:14px; margin-bottom:16px;
+  }
+  input:focus{outline:2px solid var(--turquoise); outline-offset:1px;}
+  button{
+    width:100%; background:var(--marigold); color:var(--obsidian); border:none;
+    border-radius:8px; padding:12px; font-family:'Space Grotesk',sans-serif; font-weight:600;
+    font-size:14px; cursor:pointer;
+  }
+  button:hover{opacity:.92;}
+  .error{
+    background:rgba(196,59,59,.12); border:1px solid var(--alert); color:var(--alert);
+    border-radius:8px; padding:9px 12px; font-size:12.5px; margin-bottom:16px; display:none;
+  }
+  .error.show{display:block;}
+  .demo-hint{
+    margin-top:20px; padding-top:16px; border-top:1px solid var(--line);
+    font-family:'IBM Plex Mono', monospace; font-size:11px; color:var(--stone); line-height:1.6;
+  }
+  .demo-hint b{color:var(--bone);}
+</style>
+</head>
+<script src="/config.js"></script>
+<body>
+  <div class="card">
+    <div class="brand-eyebrow">MatchDay IQ · Operations Console</div>
+    <h1>Sign in</h1>
+    <div class="sub">Estadio Banorte / Azteca — Mexico City</div>
+
+    <div class="error" id="errorBox"></div>
+
+    <form id="loginForm">
+      <label for="username">Username</label>
+      <input id="username" name="username" autocomplete="username" required />
+      <label for="password">Password</label>
+      <input id="password" name="password" type="password" autocomplete="current-password" required />
+      <button type="submit">Sign in</button>
+    </form>
+
+    <div class="demo-hint">
+      Demo accounts (change before real use):<br/>
+      <b>organizer1</b> / organizer123<br/>
+      <b>volunteer1</b> / volunteer123
+    </div>
+  </div>
+
+<script>
+document.getElementById("loginForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const username = document.getElementById("username").value.trim();
+  const password = document.getElementById("password").value;
+  const errorBox = document.getElementById("errorBox");
+  errorBox.classList.remove("show");
+
+  try{
+    const API = window.MATCHDAY_API_BASE || "/api";
+    const res = await fetch(API + "/auth/login", {
+      method: "POST",
+      credentials: "include",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({ username, password })
+    });
+    if(!res.ok){
+      const data = await res.json().catch(() => ({}));
+      errorBox.textContent = data.error || "Sign in failed";
+      errorBox.classList.add("show");
+      return;
+    }
+    window.location.href = "/dashboard.html";
+  }catch(err){
+    errorBox.textContent = "Could not reach the server. Is it running?";
+    errorBox.classList.add("show");
+  }
+});
+</script>
+</body>
+</html>

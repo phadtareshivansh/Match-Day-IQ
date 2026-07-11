@@ -1,0 +1,26 @@
+# Dependencies
+node_modules/
+
+# Environment variables — DATABASE_URL and SESSION_SECRET live here locally.
+# Never commit real credentials; set these in Render/Vercel/Railway's
+# dashboard instead.
+.env
+.env.local
+.env.*.local
+
+# Local Vercel CLI state
+.vercel
+
+# Logs
+npm-debug.log*
+*.log
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Leftover local SQLite file from earlier iterations of this project
+*.sqlite
+*.sqlite3
